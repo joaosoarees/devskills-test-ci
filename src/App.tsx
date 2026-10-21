@@ -17,6 +17,9 @@ function App() {
         </div>
         <div>
           <h1>Get started</h1>
+          <p data-testid="api-url">
+            API: {import.meta.env.VITE_API_URL ?? 'not set'}
+          </p>
           <p>
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
           </p>

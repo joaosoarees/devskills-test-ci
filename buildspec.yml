@@ -1,0 +1,23 @@
+version: 0.2
+
+env:
+  variables:
+    HUSKY: '0'
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24
+    commands:
+      - npm install --global pnpm@12.11.2
+      - pnpm install --frozen-lockfile
+  pre_build:
+    commands:
+      - pnpm run lint
+      - pnpm run format:check
+      - pnpm run typecheck
+      - pnpm run test
+  build:
+    on-failure: ABORT
+    commands:
+      - scripts/deploy.sh dev
