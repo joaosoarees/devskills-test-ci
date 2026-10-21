@@ -2,22 +2,28 @@ version: 0.2
 
 env:
   variables:
-    HUSKY: '0'
+    HUSKY: '0' # Husky 9 skips installing Git hooks; nobody commits in a build
 
 phases:
   install:
     runtime-versions:
-      nodejs: 24
+      nodejs: 24 # read on EC2 images; Lambda compute ignores it and uses the image's Node
     commands:
-      - npm install --global pnpm@12.11.2
-      - pnpm install --frozen-lockfile
+      # Not corepack: on Lambda compute its symlink fails (read-only file system).
+      - npm install --global pnpm@12.11.2 # the version in package.json's packageManager
   pre_build:
-    commands:
-      - pnpm run lint
-      - pnpm run format:check
-      - pnpm run typecheck
-      - pnpm run test
-  build:
     on-failure: ABORT
     commands:
-      - scripts/deploy.sh dev
+      - test -n "${VITE_API_URL:-}" || { echo "VITE_API_URL is not set" >&2; false; }
+      - test -n "${STAGE:-}" || { echo "STAGE is not set" >&2; false; }
+      - pnpm install --frozen-lockfile
+  build:
+    on-failure: ABORT # a failed build ends here: post_build never starts
+    commands:
+      - pnpm build --mode "$STAGE"
+  post_build:
+    commands:
+      # Second lock: publish only if every earlier phase succeeded.
+      - test "$CODEBUILD_BUILD_SUCCEEDING" = 1
+      # The cloudfront-cache-invalidation skill's script: builds, uploads in order, invalidates, waits.
+      - scripts/deploy.sh "$STAGE"

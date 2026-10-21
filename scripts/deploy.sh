@@ -8,7 +8,7 @@ set -euo pipefail
 export AWS_PAGER="" # never wait on a pager in CI
 
 stage="${1:?usage: scripts/deploy.sh <stage>}"
-stack="devskills-test-ci" # changed for the test: the skill has orders-web-$stage
+stack="devskills-test-$stage"
 region="${AWS_REGION:-us-east-1}"
 build_dir=dist
 hashed_dir=assets # Vite's folder of content-hashed files
